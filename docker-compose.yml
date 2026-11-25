@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: linkvault
+      POSTGRES_PASSWORD: linkvault
+      POSTGRES_DB: linkvault
+    ports:
+      - "5432:5432"
+    volumes:
+      - linkvault-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linkvault -d linkvault"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://linkvault:linkvault@db:5432/linkvault
+      RATE_LIMIT_MAX: "30"
+      RATE_LIMIT_WINDOW_SECONDS: "3600"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  linkvault-data:
